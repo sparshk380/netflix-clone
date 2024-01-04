@@ -13,7 +13,7 @@ Netflix Home Page created using HTML and CSS and deployed using Docker
 To deploy this project run on your terminal:
 
 ```bash
-  git clone 
+  git clone git@github.com:sparshk380/netflix-clone.git
 ```
 ```bash
   cd netflix-clone
