@@ -27,7 +27,7 @@ To deploy this project run on your terminal:
 
 
 
-## To access the game on your machine:
+## To access the deployed app on your machine:
 
 Go to the following address in your browser:
 
