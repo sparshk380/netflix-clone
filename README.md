@@ -22,7 +22,7 @@ To deploy this project run on your terminal:
   docker build -t <image-name:tag> .
 ```
 ```bash
-  docker run -d -p 80:80 --name=2048 <image-name:tag>
+  docker run -d -p 80:80 --name=netflix-clone <image-name:tag>
 ```
 
 
