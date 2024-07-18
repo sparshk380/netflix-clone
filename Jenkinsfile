@@ -1,10 +1,6 @@
 pipeline {
-    agent {
-        // This assumes Jenkins has access to Docker
-        docker { image 'docker:stable' }
-    }
+    agent any
     environment {
-        // Set Docker Hub credentials and other necessary variables
         DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
         DOCKERHUB_REPO = 'gaganr31/jenkins' // Replace with your Docker Hub repository
         IMAGE_NAME = 'netflix-clone' // Replace with your desired image name
