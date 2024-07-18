@@ -11,9 +11,6 @@ pipeline {
     }
     stages {
         stage('Install Docker') {
-            when {
-                branch 'Dev'
-            }
             steps {
                 script {
                     // Install Docker
@@ -33,18 +30,12 @@ pipeline {
             }
         }
         stage('Checkout') {
-            when {
-                branch 'Dev'
-            }
             steps {
                 // Checkout the repository
                 checkout scm
             }
         }
         stage('Build Docker Image') {
-            when {
-                branch 'Dev'
-            }
             steps {
                 script {
                     // Build the Docker image
@@ -55,9 +46,6 @@ pipeline {
             }
         }
         stage('Push to Docker Hub') {
-            when {
-                branch 'Dev'
-            }
             steps {
                 script {
                     // Log in to Docker Hub
