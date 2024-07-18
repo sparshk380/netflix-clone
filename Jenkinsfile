@@ -5,7 +5,7 @@ pipeline {
         // Set the Docker Hub credentials ID stored in Jenkins
         DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials-id') // Replace 'docker-hub-credentials-id' with the ID of your Docker Hub credentials in Jenkins
         // Define the Docker image name to build and push
-        DOCKER_IMAGE = 'sparshk380/netflix-clone' // Replace 'sparshk' with your Docker Hub username
+        DOCKER_IMAGE = 'sparshk380/netflix-clone' // Replace 'sparshk380' with your Docker Hub username
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image and tag it with the build number
-                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
+                    def dockerImage = docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
                 }
             }
         }
@@ -29,18 +29,9 @@ pipeline {
             steps {
                 script {
                     // Push the Docker image to Docker Hub
-                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIALS') {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
                     }
-                }
-            }
-        }
-
-        stage('Post-build Actions') {
-            steps {
-                script {
-                    // Set the build result to SUCCESS
-                    currentBuild.result = 'SUCCESS'
                 }
             }
         }
@@ -50,6 +41,7 @@ pipeline {
         success {
             script {
                 // Perform any additional actions on successful build
+                currentBuild.result = 'SUCCESS'
             }
         }
         failure {
