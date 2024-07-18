@@ -5,7 +5,7 @@ pipeline {
         // Set the Docker Hub credentials ID stored in Jenkins
         DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials-id') // Replace 'docker-hub-credentials-id' with the ID of your Docker Hub credentials in Jenkins
         // Define the Docker image name to build and push
-        DOCKER_IMAGE = 'sparshk380/netflix-clone' // Replace 'sparshk380' with your Docker Hub username
+        DOCKER_IMAGE = 'sparshk848/netflix-clone' // Replace 'sparshk380' with your Docker Hub username
     }
 
     stages {
