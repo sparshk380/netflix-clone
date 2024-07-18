@@ -1,50 +1,66 @@
 pipeline {
     agent any
-
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace with your actual credentials ID
-        DOCKER_IMAGE = 'sparshk848/netflix-clone'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
+        DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
+        IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
+        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
-
     stages {
+        stage('Install Docker') {
+            steps {
+                script {
+                    // Install Docker
+                    sh '''
+                    if ! [ -x "$(command -v docker)" ]; then
+                        echo "Docker not found, installing..."
+                        curl -fsSL https://get.docker.com -o get-docker.sh
+                        sh get-docker.sh
+                        sudo usermod -aG docker $USER
+                        sudo systemctl start docker
+                        sudo chmod 666 /var/run/docker.sock
+                    else
+                        echo "Docker is already installed"
+                    fi
+                    '''
+                }
+            }
+        }
         stage('Checkout') {
             steps {
+                // Checkout the repository
                 checkout scm
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image and tag it with the build number
-                    def dockerImage = docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
+                    // Build the Docker image
+                    sh """
+                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} .
+                    """
                 }
             }
         }
-
-        stage('Push Docker Image') {
+        stage('Push to Docker Hub') {
             steps {
                 script {
-                    // Push the Docker image to Docker Hub
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
-                    }
+                    // Log in to Docker Hub
+                    sh """
+                    echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
+                    """
+                    // Push the Docker image
+                    sh """
+                    docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
+                    """
                 }
             }
         }
     }
-
     post {
-        success {
-            script {
-                currentBuild.result = 'SUCCESS'
-            }
-        }
-        failure {
-            script {
-                currentBuild.result = 'FAILURE'
-                error('Build failed, merge to main branch is not allowed.')
-            }
+        always {
+            // Clean up Docker images to save space
+            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
     }
 }
