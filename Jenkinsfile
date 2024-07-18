@@ -22,7 +22,7 @@ pipeline {
                 script {
                     // Build the Docker image
                     sh """
-                    sudo docker build -t ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} .
+                    docker build -t ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} .
                     """
                 }
             }
