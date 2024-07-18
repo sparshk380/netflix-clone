@@ -36,7 +36,7 @@ pipeline {
                 script {
                     // Build the Docker image
                     sh """
-                    docker build -t ${IMAGE_NAME}:${BUILD_ID} .
+                    docker build -t  ${DOCKERHUB_REPO}/${IMAGE_NAME}:${BUILD_ID} .
                     """
                 }
             }
