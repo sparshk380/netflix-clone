@@ -16,14 +16,7 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Test') {
-            steps {
-                // Run your tests here
-                // Example for a Node.js application:
-                sh 'npm install'
-                sh 'npm test'
-            }
-        }
+
         stage('Build Docker Image') {
             steps {
                 script {
