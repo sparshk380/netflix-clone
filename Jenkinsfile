@@ -2,8 +2,9 @@ pipeline {
     agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
-        DOCKERHUB_REPO = 'gaganr31/jenkins' // Replace with your Docker Hub repository
-        IMAGE_NAME = 'netflix-clone' // Replace with your desired image name
+        DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
+        IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
+        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
         stage('Install Docker') {
@@ -36,7 +37,7 @@ pipeline {
                 script {
                     // Build the Docker image
                     sh """
-                    docker build -t  ${DOCKERHUB_REPO}/${IMAGE_NAME}:${BUILD_ID} .
+                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} .
                     """
                 }
             }
@@ -50,7 +51,7 @@ pipeline {
                     """
                     // Push the Docker image
                     sh """
-                    docker push ${DOCKERHUB_REPO}/${IMAGE_NAME}:${BUILD_ID}
+                    docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
                     """
                 }
             }
@@ -59,7 +60,7 @@ pipeline {
     post {
         always {
             // Clean up Docker images to save space
-            sh 'docker rmi ${DOCKERHUB_REPO}/${IMAGE_NAME}:${BUILD_ID} || true'
+            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
     }
 }
