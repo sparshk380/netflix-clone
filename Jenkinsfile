@@ -50,7 +50,7 @@ pipeline {
                     """
                     // Push the Docker image
                     sh """
-                    docker push ${DOCKERHUB_REPO}/${IMAGE_NAME}:${BUILD_ID}
+                    docker push ${DOCKERHUB_REPO}:${BUILD_ID}
                     """
                 }
             }
