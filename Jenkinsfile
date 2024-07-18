@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials-id') // Replace 'dockerhub' with your Jenkins credentials ID
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
         DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
@@ -64,3 +64,9 @@ pipeline {
         }
     }
 }
+
+
+
+
+
+
