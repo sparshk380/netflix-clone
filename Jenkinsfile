@@ -22,7 +22,7 @@ pipeline {
                 script {
                     // Build the Docker image
                     sh """
-                    docker build -t ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} .
+                    sudo docker build -t ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} .
                     """
                 }
             }
@@ -32,11 +32,11 @@ pipeline {
                 script {
                     // Log in to Docker Hub
                     sh """
-                    echo ${env.DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${env.DOCKERHUB_CREDENTIALS_USR} --password-stdin
+                   sudo echo ${env.DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${env.DOCKERHUB_CREDENTIALS_USR} --password-stdin
                     """
                     // Push the Docker image
                     sh """
-                    docker push ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID}
+                    sudo docker push ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID}
                     """
                 }
             }
@@ -45,7 +45,7 @@ pipeline {
     post {
         always {
             // Clean up Docker images to save space
-            sh 'docker rmi ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} || true'
+            sh 'sudo docker rmi ${env.DOCKERHUB_REPO}/${env.IMAGE_NAME}:${env.BUILD_ID} || true'
         }
     }
 }
