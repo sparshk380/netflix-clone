@@ -59,8 +59,26 @@ pipeline {
     }
     post {
         always {
-            // Clean up Docker images to save space
-            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
+            script
+             {
+                def repoUrl = "https://api.github.com/repos/sparshk380/netflix-clone/statuses/${env.GIT_COMMIT}"
+                def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                        curl -H "Authorization: token $GITHUB_TOKEN" \
+                             -H "Content-Type: application/json" \
+                             -d '{
+                                 "state": "${status}",
+                                 "target_url": "${env.BUILD_URL}",
+                                 "description": "Jenkins Build ${status}",
+                                 "context": "jenkins-ci"
+                             }' \
+                             ${repoUrl}
+                    """
+                }
+            }
         }
     }
 }
+
