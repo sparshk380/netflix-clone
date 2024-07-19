@@ -44,7 +44,7 @@ pipeline {
                             ${SONARQUBE_SCANNER}/bin/sonar-scanner \
                                 -Dsonar.projectKey=netflix-clone \
                                 -Dsonar.sources=. \
-                                -Dsonar.host.url=http://<public-ip>:9000 \
+                                -Dsonar.host.url=http://3.83.237.11:9000 \
                                 -Dsonar.login=${SONAR_AUTH_TOKEN}
                             """
                         }
