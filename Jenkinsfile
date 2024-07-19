@@ -26,55 +26,28 @@ pipeline {
                 }
             }
         }
-        stage('Install Python and Pip') {
-            steps {
-                script {
-                    // Install Python and pip if not installed
-                    sh '''
-                    if ! [ -x "$(command -v python3)" ]; then
-                        echo "Python not found, installing..."
-                        sudo apt-get update
-                        sudo apt-get install -y python3 python3-pip
-                    else
-                        echo "Python is already installed"
-                    fi
-                    if ! [ -x "$(command -v pip3)" ]; then
-                        echo "pip not found, installing..."
-                        sudo apt-get install -y python3-pip
-                    else
-                        echo "pip is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
-        stage('Install TruffleHog') {
-            steps {
-                script {
-                    // Install TruffleHog if not already installed
-                    sh '''
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        pip3 install truffleHog
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
         stage('Checkout') {
             steps {
                 // Checkout the repository
                 checkout scm
             }
         }
-        stage('Run TruffleHog') {
+        stage('Run TruffleHog with Docker') {
             steps {
                 script {
-                    // Run TruffleHog
+                    // Run TruffleHog using Docker
                     sh '''
-                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --branch Dev
+                    docker run --rm -it -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Gagan-R31/Jenkins.git --branch TEST
+                    '''
+                }
+            }
+        }
+        stage('Run TruffleHog Directly') {
+            steps {
+                script {
+                    // Run TruffleHog directly
+                    sh '''
+                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --only-verified
                     '''
                 }
             }
