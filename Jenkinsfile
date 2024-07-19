@@ -58,22 +58,6 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to EC2') {
-            steps {
-                script {
-                    // SSH into EC2 and run the Docker container
-                    sh """
-                    ssh -o StrictHostKeyChecking=no -i ${SSH_CREDENTIALS} ${EC2_HOST} <<EOF
-                    docker pull ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
-                    docker stop netflix-clone || true
-                    docker rm netflix-clone || true
-                    docker run -d -p 80:80 --name=netflix-clone ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
-                    EOF
-                    """
-                }
-            }
-        }
-    }
     post {
         always {
             script {
