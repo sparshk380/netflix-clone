@@ -32,47 +32,23 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Run TruffleHog with Docker') {
+        stage('Install TruffleHog') {
             steps {
                 script {
-                    // Run TruffleHog using Docker
-                    sh '''
-                    docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Gagan-R31/Jenkins.git
-                    '''
-                }
-            }
-        }
-        stage('Run TruffleHog Directly') {
-            steps {
-                script {
-                    // Install Python and pip if not installed
-                    sh '''
-                    if ! [ -x "$(command -v python3)" ]; then
-                        echo "Python not found, installing..."
-                        sudo apt-get update
-                        sudo apt-get install -y python3 python3-pip
-                    else
-                        echo "Python is already installed"
-                    fi
-                    if ! [ -x "$(command -v pip3)" ]; then
-                        echo "pip not found, installing..."
-                        sudo apt-get install -y python3-pip
-                    else
-                        echo "pip is already installed"
-                    fi
-                    '''
-                }
-                script {
-                    // Install TruffleHog if not already installed
+                    // Install TruffleHog
                     sh '''
                     if ! [ -x "$(command -v trufflehog)" ]; then
                         echo "TruffleHog not found, installing..."
-                        pip3 install truffleHog
+                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
                     else
                         echo "TruffleHog is already installed"
                     fi
                     '''
                 }
+            }
+        }
+        stage('Run TruffleHog') {
+            steps {
                 script {
                     // Run TruffleHog directly
                     sh '''
@@ -108,8 +84,4 @@ pipeline {
     }
     post {
         always {
-            // Clean up Docker images to save space
-            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
-        }
-    }
-}
+            // Clean up
