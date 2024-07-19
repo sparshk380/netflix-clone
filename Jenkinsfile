@@ -32,6 +32,25 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Run TruffleHog') {
+            steps {
+                script {
+                    // Install TruffleHog if not already installed
+                    sh '''
+                    if ! [ -x "$(command -v trufflehog)" ]; then
+                        echo "TruffleHog not found, installing..."
+                        pip install truffleHog
+                    else
+                        echo "TruffleHog is already installed"
+                    fi
+                    '''
+                    // Run TruffleHog
+                    sh '''
+                    trufflehog git https://github.com/Gagan-R31/Jenkins --branch TEST
+                    '''
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
