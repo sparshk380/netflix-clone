@@ -60,25 +60,17 @@ pipeline {
         stage('Install Go') {
             steps {
                 script {
-                    // Remove existing Go installations
-                    sh '''
-                    if [ -d "/usr/local/go" ]; then
-                        sudo rm -rf /usr/local/go
-                    fi
-                    if [ -d "$HOME/go" ]; then
-                        rm -rf $HOME/go
-                    fi
-                    if [ -f "/usr/local/bin/go" ]; then
-                        sudo rm /usr/local/bin/go
-                    fi
-                    '''
                     // Install Go
                     sh '''
-                    echo "Installing Go..."
-                    curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
-                    sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
-                    export PATH=$PATH:/usr/local/go/bin
-                    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+                    if ! [ -x "$(command -v go)" ]; then
+                        echo "Go not found, installing..."
+                        curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
+                        sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+                        export PATH=$PATH:/usr/local/go/bin
+                        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+                    else
+                        echo "Go is already installed"
+                    fi
                     '''
                     // Ensure the new Go binary is in the PATH
                     sh 'export PATH=$PATH:/usr/local/go/bin'
