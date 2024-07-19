@@ -5,7 +5,6 @@ pipeline {
         DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-
     }
     stages {
         stage('Install Docker') {
@@ -58,6 +57,24 @@ pipeline {
                 }
             }
         }
+        stage('Install Go') {
+            steps {
+                script {
+                    // Install Go
+                    sh '''
+                    if ! [ -x "$(command -v go)" ]; then
+                        echo "Go not found, installing..."
+                        curl -LO https://golang.org/dl/go1.16.6.linux-amd64.tar.gz
+                        sudo tar -C /usr/local -xzf go1.16.6.linux-amd64.tar.gz
+                        export PATH=$PATH:/usr/local/go/bin
+                        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+                    else
+                        echo "Go is already installed"
+                    fi
+                    '''
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -70,7 +87,11 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh 'go test ./...'
+                // Run Go tests
+                sh '''
+                export PATH=$PATH:/usr/local/go/bin
+                go test ./...
+                '''
             }
         }
         stage('Push to Docker Hub') {
@@ -91,7 +112,7 @@ pipeline {
     post {
         always {
             script {
-                def repoUrl = "https://api.github.com/repos/Gagan-R31/netflix-clone/statuses/${env.GIT_COMMIT}"
+                def repoUrl = "https://api.github.com/repos/Gagan-R31/Jenkins/statuses/${env.GIT_COMMIT}"
                 def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
                 
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
