@@ -5,8 +5,6 @@ pipeline {
         DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-        SSH_CREDENTIALS = credentials('ec2-ssh') // Replace 'ec2-ssh' with your Jenkins SSH credentials ID
-        EC2_HOST = 'ec2-100-27-192-228.compute-1.amazonaws.com' // Replace with your EC2 instance's public IP or DNS
     }
     stages {
         stage('Install Docker') {
@@ -58,9 +56,11 @@ pipeline {
                 }
             }
         }
+    }
     post {
         always {
-            script {
+            script
+             {
                 def repoUrl = "https://api.github.com/repos/sparshk380/netflix-clone/statuses/${env.GIT_COMMIT}"
                 def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
                 
