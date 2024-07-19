@@ -5,7 +5,7 @@ pipeline {
         DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-        GITHUB_REPO = 'Gagan-R31/Jenkins' // Your GitHub repository
+        GITHUB_REPO = 'https://github.com/Gagan-R31/Jenkins' // Your GitHub repository
     }
     stages {
         stage('Install Docker') {
