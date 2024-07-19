@@ -26,13 +26,23 @@ pipeline {
                 }
             }
         }
-        stage('Checkout') {
+        stage('Install Pip') {
             steps {
-                // Checkout the repository
-                checkout scm
+                script {
+                    // Install pip if not installed
+                    sh '''
+                    if ! [ -x "$(command -v pip)" ]; then
+                        echo "pip not found, installing..."
+                        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+                        python get-pip.py
+                    else
+                        echo "pip is already installed"
+                    fi
+                    '''
+                }
             }
         }
-        stage('Run TruffleHog') {
+        stage('Install TruffleHog') {
             steps {
                 script {
                     // Install TruffleHog if not already installed
@@ -44,9 +54,21 @@ pipeline {
                         echo "TruffleHog is already installed"
                     fi
                     '''
+                }
+            }
+        }
+        stage('Checkout') {
+            steps {
+                // Checkout the repository
+                checkout scm
+            }
+        }
+        stage('Run TruffleHog') {
+            steps {
+                script {
                     // Run TruffleHog
                     sh '''
-                    trufflehog git https://github.com/Gagan-R31/Jenkins --branch TEST
+                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --branch TEST
                     '''
                 }
             }
