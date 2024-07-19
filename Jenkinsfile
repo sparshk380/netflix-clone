@@ -84,4 +84,8 @@ pipeline {
     }
     post {
         always {
-            // Clean up
+            // Clean up Docker images to save space
+            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
+        }
+    }
+}
