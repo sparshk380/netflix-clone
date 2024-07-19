@@ -7,21 +7,21 @@ pipeline {
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
-        stage('Install Docker') {
+        stage('Install TruffleHog') {
             steps {
                 script {
-                    // Install Docker
+                    // Clean previous TruffleHog installation if any
                     sh '''
-                    if ! [ -x "$(command -v docker)" ]; then
-                        echo "Docker not found, installing..."
-                        curl -fsSL https://get.docker.com -o get-docker.sh
-                        sh get-docker.sh
-                        sudo usermod -aG docker $USER
-                        sudo systemctl start docker
-                        sudo chmod 666 /var/run/docker.sock
-                    else
-                        echo "Docker is already installed"
+                    if [ -x "$(command -v trufflehog)" ]; then
+                        sudo rm -f /usr/local/bin/trufflehog
                     fi
+                    '''
+                    // Download and install TruffleHog
+                    sh '''
+                    curl -sSfL https://github.com/trufflesecurity/trufflehog/releases/download/v3.8.0/trufflehog_Linux_x86_64.tar.gz -o trufflehog.tar.gz
+                    tar -xzf trufflehog.tar.gz
+                    sudo mv trufflehog /usr/local/bin/
+                    rm trufflehog.tar.gz
                     '''
                 }
             }
@@ -32,27 +32,15 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Install TruffleHog') {
-            steps {
-                script {
-                    // Install TruffleHog
-                    sh '''
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
         stage('Run TruffleHog') {
             steps {
                 script {
                     // Run TruffleHog directly
                     sh '''
-                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --only-verified
+                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --only-verified || {
+                        echo "TruffleHog scan failed"
+                        exit 1
+                    }
                     '''
                 }
             }
