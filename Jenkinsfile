@@ -26,15 +26,21 @@ pipeline {
                 }
             }
         }
-        stage('Install Pip') {
+        stage('Install Python and Pip') {
             steps {
                 script {
-                    // Install pip if not installed
+                    // Install Python and pip if not installed
                     sh '''
-                    if ! [ -x "$(command -v pip)" ]; then
+                    if ! [ -x "$(command -v python3)" ]; then
+                        echo "Python not found, installing..."
+                        sudo apt-get update
+                        sudo apt-get install -y python3 python3-pip
+                    else
+                        echo "Python is already installed"
+                    fi
+                    if ! [ -x "$(command -v pip3)" ]; then
                         echo "pip not found, installing..."
-                        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-                        python get-pip.py
+                        sudo apt-get install -y python3-pip
                     else
                         echo "pip is already installed"
                     fi
@@ -49,7 +55,7 @@ pipeline {
                     sh '''
                     if ! [ -x "$(command -v trufflehog)" ]; then
                         echo "TruffleHog not found, installing..."
-                        pip install truffleHog
+                        pip3 install truffleHog
                     else
                         echo "TruffleHog is already installed"
                     fi
@@ -68,7 +74,7 @@ pipeline {
                 script {
                     // Run TruffleHog
                     sh '''
-                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --branch TEST
+                    trufflehog git https://github.com/Gagan-R31/Jenkins.git --branch Dev
                     '''
                 }
             }
