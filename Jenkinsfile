@@ -5,6 +5,7 @@ pipeline {
         DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
+        GITHUB_REPO = 'Gagan-R31/Jenkins' // Your GitHub repository
     }
     stages {
         stage('Install Docker') {
@@ -84,6 +85,24 @@ pipeline {
     }
     post {
         always {
+            script {
+                def repoUrl = "https://api.github.com/repos/${GITHUB_REPO}/statuses/${env.GIT_COMMIT}"
+                def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                        curl -H "Authorization: token $GITHUB_TOKEN" \
+                             -H "Content-Type: application/json" \
+                             -d '{
+                                 "state": "${status}",
+                                 "target_url": "${env.BUILD_URL}",
+                                 "description": "Jenkins Build ${status}",
+                                 "context": "jenkins-ci"
+                             }' \
+                             ${repoUrl}
+                    """
+                }
+            }
             // Clean up Docker images to save space
             sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
