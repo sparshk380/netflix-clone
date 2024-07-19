@@ -6,7 +6,7 @@ pipeline {
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
         SSH_CREDENTIALS = credentials('ec2-ssh') // Replace 'ec2-ssh' with your Jenkins SSH credentials ID
-        EC2_HOST = 'ubuntu@100.27.192.228' // Replace with your EC2 instance's public IP or DNS
+        EC2_HOST = 'ubuntu@ec2-100-27-192-228.compute-1.amazonaws.com' // Replace with your EC2 instance's public IP or DNS
     }
     stages {
         stage('Install Docker') {
