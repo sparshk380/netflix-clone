@@ -89,7 +89,7 @@ pipeline {
                 def repoUrl = "https://api.github.com/repos/${GITHUB_REPO}/statuses/${env.GIT_COMMIT}"
                 def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
                 
-                withCredentials([string(credentialsId: 'jenkins-creds', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh """
                         curl -H "Authorization: token $GITHUB_TOKEN" \
                              -H "Content-Type: application/json" \
