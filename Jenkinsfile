@@ -68,6 +68,11 @@ pipeline {
                 }
             }
         }
+        stage('Test') {
+            steps {
+                sh 'go test ./...'
+            }
+        }
         stage('Push to Docker Hub') {
             steps {
                 script {
