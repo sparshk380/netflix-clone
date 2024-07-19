@@ -5,14 +5,12 @@ pipeline {
         DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-        SONARQUBE_SCANNER = tool 'SonarQube Scanner' // Name of your SonarQube Scanner tool installation
-        SONARQUBE_SERVER = 'SonarQube' // Name of your SonarQube server configuration
     }
     stages {
         stage('Install Docker') {
             steps {
                 script {
-                    // Install Docker if not already installed
+                    // Install Docker
                     sh '''
                     if ! [ -x "$(command -v docker)" ]; then
                         echo "Docker not found, installing..."
@@ -34,21 +32,28 @@ pipeline {
                 checkout scm
             }
         }
-        stage('SonarQube Analysis') {
+        stage('Install TruffleHog') {
             steps {
-                withSonarQubeEnv(SONARQUBE_SERVER) {
-                    script {
-                        // Run SonarQube analysis
-                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                            sh """
-                            ${SONARQUBE_SCANNER}/bin/sonar-scanner \
-                                -Dsonar.projectKey=netflix-clone \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=http://3.83.237.11:9000 \
-                                -Dsonar.login=${SONAR_AUTH_TOKEN}
-                            """
-                        }
-                    }
+                script {
+                    // Install TruffleHog
+                    sh '''
+                    if ! [ -x "$(command -v trufflehog)" ]; then
+                        echo "TruffleHog not found, installing..."
+                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
+                    else
+                        echo "TruffleHog is already installed"
+                    fi
+                    '''
+                }
+            }
+        }
+        stage('Run TruffleHog') {
+            steps {
+                script {
+                    // Run TruffleHog directly
+                    sh '''
+                    sudo trufflehog git https://github.com/sparshk380/netflix-clone --debug
+                    '''
                 }
             }
         }
@@ -80,10 +85,8 @@ pipeline {
     post {
         always {
             script {
-                // Post build GitHub status update
                 def repoUrl = "https://api.github.com/repos/sparshk380/netflix-clone/statuses/${env.GIT_COMMIT}"
                 def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
-                
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh """
                         curl -H "Authorization: token $GITHUB_TOKEN" \
@@ -98,6 +101,8 @@ pipeline {
                     """
                 }
             }
+            // Clean up Docker images to save space
+            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
     }
 }
