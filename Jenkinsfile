@@ -32,32 +32,6 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Install TruffleHog') {
-            steps {
-                script {
-                    // Install TruffleHog
-                    sh '''
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        sudo echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-                        sudo curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
-        stage('Run TruffleHog') {
-            steps {
-                script {
-                    // Run TruffleHog directly
-                    sh '''
-                    sudo trufflehog git https://github.com/sparshk380/netflix-clone --debug
-                    '''
-                }
-            }
-        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -85,9 +59,11 @@ pipeline {
     }
     post {
         always {
-            script {
+            script
+             {
                 def repoUrl = "https://api.github.com/repos/sparshk380/netflix-clone/statuses/${env.GIT_COMMIT}"
                 def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh """
                         curl -H "Authorization: token $GITHUB_TOKEN" \
@@ -102,8 +78,6 @@ pipeline {
                     """
                 }
             }
-            // Clean up Docker images to save space
-            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
     }
 }
