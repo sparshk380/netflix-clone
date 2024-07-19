@@ -92,7 +92,7 @@ pipeline {
                 // Run Go tests
                 sh '''
                 export PATH=$PATH:/usr/local/go/bin
-                go test ./...
+                go test -v ./...
                 '''
             }
         }
