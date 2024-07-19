@@ -1,13 +1,19 @@
-FROM ubuntu:22.04
+FROM golang:1.21.1-alpine3.18 as builder
 
-RUN apt-get update
+WORKDIR /
 
-RUN apt-get install -y curl zip nginx
+COPY go.* ./
+RUN go mod download 
 
-RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+COPY . . 
+COPY dev.env .
+RUN go build -o /myapp .
 
-COPY . /var/www/html/
+FROM alpine:latest
+COPY --from=builder /myapp /myapp
 
-EXPOSE 80
+COPY --from=builder /dev.env /dev.env
 
-CMD ["/usr/sbin/nginx", "-c", "/etc/nginx/nginx.conf"]
+EXPOSE 8000
+
+ENTRYPOINT [ "/myapp" ]
