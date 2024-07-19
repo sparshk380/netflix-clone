@@ -39,7 +39,7 @@ pipeline {
                     sh '''
                     if ! [ -x "$(command -v trufflehog)" ]; then
                         echo "TruffleHog not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
+                        sudo curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
                     else
                         echo "TruffleHog is already installed"
                     fi
