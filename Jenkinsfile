@@ -37,7 +37,7 @@ pipeline {
                 script {
                     // Run TruffleHog using Docker
                     sh '''
-                    docker run --rm -it -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Gagan-R31/Jenkins.git --branch TEST
+                    docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Gagan-R31/Jenkins.git --branch Dev
                     '''
                 }
             }
