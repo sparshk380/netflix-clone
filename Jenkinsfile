@@ -52,7 +52,7 @@ pipeline {
                 script {
                     // Run TruffleHog directly
                     sh '''
-                    sudo trufflehog git https://github.com/Gagan-R31/Jenkins.git --only-verified
+                    sudo trufflehog git https://github.com/Gagan-R31/Jenkins --debug
                     '''
                 }
             }
