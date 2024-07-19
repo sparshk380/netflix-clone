@@ -7,9 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-
 	"github.com/unification-com/unode-onboard-api/pkg/handlers"
-	db "github.com/unification-com/unode-onboard-api/pkg/models"
 )
 
 func main() {
@@ -19,11 +17,11 @@ func main() {
 
 	logrus.SetLevel(logrus.DebugLevel)
 
-	dbClient := db.NewDBClient()
+	// dbClient := db.NewDBClient()
 
-	defer dbClient.CloseConnection()
+	// defer dbClient.CloseConnection()
 
-	server := handlers.NewServer(dbClient)
+	// server := handlers.NewServer(dbClient)
 
 	// syscall.SIGUSR1, syscall.SIGUSR2 will only work in linux
 	// open the unode api in linux os or wsl to have access to SIGUSR1 and SIGUSR2 signals
@@ -50,6 +48,8 @@ func main() {
 	// 		}
 	// 	}
 	// }()
+
+	server := handlers.NewServer()
 
 	go func() {
 		if err := server.RunServer(); err != nil {
