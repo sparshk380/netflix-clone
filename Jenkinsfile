@@ -19,8 +19,8 @@ pipeline {
                         if ! [ -x "$(command -v cosign)" ]; then
                             echo "Cosign not found, installing..."
                             curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-                            sudo mv cosign-linux-amd64 /usr/local/bin/cosign
-                            sudo chmod +x /usr/local/bin/cosign
+                            mv cosign-linux-amd64 /usr/local/bin/cosign
+                            chmod +x /usr/local/bin/cosign
                         else
                             echo "Cosign is already installed"
                         fi
@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     // Run TruffleHog to scan the repository
-                    sh 'sudo trufflehog git https://github.com/Gagan-R31/Jenkins --debug'
+                    sh 'trufflehog git https://github.com/Gagan-R31/Jenkins --debug'
                 }
             }
         }
@@ -59,7 +59,7 @@ pipeline {
                     if ! [ -x "$(command -v go)" ]; then
                         echo "Go not found, installing..."
                         curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
-                        sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+                        tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
                         echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile
                     else
                         echo "Go is already installed"
