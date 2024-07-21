@@ -113,7 +113,7 @@ pipeline {
     }
     post {
         always {
-            node {
+            node('kubernetes') {
                 script {
                     def repoUrl = "https://api.github.com/repos/Gagan-R31/Jenkins/statuses/${env.GIT_COMMIT}"
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
