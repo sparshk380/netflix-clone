@@ -1,57 +1,36 @@
 pipeline {
     agent any
     environment {
-        //DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
-        //DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
-        // stage('Install Docker') {
-        //     steps {
-        //         script {
-        //             // Install Docker
-        //             sh '''
-        //             if ! [ -x "$(command -v docker)" ]; then
-        //                 echo "Docker not found, installing..."
-        //                 curl -fsSL https://get.docker.com -o get-docker.sh
-        //                 sh get-docker.sh
-        //                 sudo usermod -aG docker $USER
-        //                 sudo systemctl start docker
-        //                 sudo chmod 666 /var/run/docker.sock
-        //             else
-        //                 echo "Docker is already installed"
-        //             fi
-        //             '''
-        //         }
-        //     }
-        // }
         stage('Checkout') {
             steps {
                 // Checkout the repository
                 checkout scm
             }
         }
-        stage('Install TruffleHog') {
+        stage('Install Tools') {
             steps {
                 script {
-                    // Install TruffleHog
+                    // Install Cosign and TruffleHog if not already installed
                     sh '''
                         if ! [ -x "$(command -v cosign)" ]; then
-                        echo "Cosign not found, installing..."
-                        COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep 'tag_name' | cut -d\" -f4)
-                        curl -Lo cosign https://github.com/sigstore/cosign/releases/download/$COSIGN_VERSION/cosign-linux-amd64
-                        chmod +x cosign
-                        sudo mv cosign /usr/local/bin/
-                    else
-                        echo "Cosign is already installed"
-                    fi
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
+                            echo "Cosign not found, installing..."
+                            COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep "tag_name" | cut -d\" -f4)
+                            curl -Lo cosign https://github.com/sigstore/cosign/releases/download/$COSIGN_VERSION/cosign-linux-amd64
+                            chmod +x cosign
+                            sudo mv cosign /usr/local/bin/
+                        else
+                            echo "Cosign is already installed"
+                        fi
+                        if ! [ -x "$(command -v trufflehog)" ]; then
+                            echo "TruffleHog not found, installing..."
+                            curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
+                        else
+                            echo "TruffleHog is already installed"
+                        fi
                     '''
                 }
             }
@@ -59,24 +38,21 @@ pipeline {
         stage('Run TruffleHog') {
             steps {
                 script {
-                    // Run TruffleHog directly
-                    sh '''
-                    sudo trufflehog git https://github.com/Gagan-R31/Jenkins --debug
-                    '''
+                    // Run TruffleHog to scan the repository
+                    sh 'sudo trufflehog git https://github.com/Gagan-R31/Jenkins --debug'
                 }
             }
         }
         stage('Install Go') {
             steps {
                 script {
-                    // Install Go
+                    // Install Go if not already installed
                     sh '''
                     if ! [ -x "$(command -v go)" ]; then
                         echo "Go not found, installing..."
                         curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
                         sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
-                        export PATH=$PATH:/usr/local/go/bin
-                        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+                        echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile
                     else
                         echo "Go is already installed"
                     fi
@@ -90,32 +66,22 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image
-                    sh """
-                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} .
-                    """
+                    sh "docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} ."
                 }
             }
         }
         stage('Test') {
             steps {
                 // Run Go tests
-                sh '''
-                export PATH=$PATH:/usr/local/go/bin
-                go test -v ./...
-                '''
+                sh 'go test -v ./...'
             }
         }
         // stage('Push to Docker Hub') {
         //     steps {
         //         script {
-        //             // Log in to Docker Hub
-        //             sh """
-        //             echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
-        //             """
-        //             // Push the Docker image
-        //             sh """
-        //             docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
-        //             """
+        //             // Log in to Docker Hub and push the Docker image
+        //             sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+        //             sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}"
         //         }
         //     }
         // }
@@ -124,6 +90,7 @@ pipeline {
         always {
             node('kubernetes') {
                 script {
+                    // Report build status to GitHub
                     def repoUrl = "https://api.github.com/repos/Gagan-R31/Jenkins/statuses/${env.GIT_COMMIT}"
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
                     
