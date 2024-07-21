@@ -37,14 +37,7 @@ pipeline {
                 script {
                     // Install TruffleHog
                     sh '''
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
-
-                    if ! [ -x "$(command -v cosign)" ]; then
+                        if ! [ -x "$(command -v cosign)" ]; then
                         echo "Cosign not found, installing..."
                         COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep 'tag_name' | cut -d\" -f4)
                         curl -Lo cosign https://github.com/sigstore/cosign/releases/download/$COSIGN_VERSION/cosign-linux-amd64
@@ -52,6 +45,12 @@ pipeline {
                         sudo mv cosign /usr/local/bin/
                     else
                         echo "Cosign is already installed"
+                    fi
+                    if ! [ -x "$(command -v trufflehog)" ]; then
+                        echo "TruffleHog not found, installing..."
+                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
+                    else
+                        echo "TruffleHog is already installed"
                     fi
                     '''
                 }
