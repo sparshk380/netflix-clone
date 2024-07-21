@@ -43,6 +43,16 @@ pipeline {
                     else
                         echo "TruffleHog is already installed"
                     fi
+
+                    if ! [ -x "$(command -v cosign)" ]; then
+                        echo "Cosign not found, installing..."
+                        COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep 'tag_name' | cut -d\" -f4)
+                        curl -Lo cosign https://github.com/sigstore/cosign/releases/download/$COSIGN_VERSION/cosign-linux-amd64
+                        chmod +x cosign
+                        sudo mv cosign /usr/local/bin/
+                    else
+                        echo "Cosign is already installed"
+                    fi
                     '''
                 }
             }
