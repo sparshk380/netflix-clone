@@ -1,10 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
-        DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
-        // IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
-        // BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
+        IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
+        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
         stage('Install Docker') {
