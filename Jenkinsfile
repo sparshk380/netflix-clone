@@ -30,31 +30,31 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Install TruffleHog') {
-            steps {
-                script {
-                    // Install TruffleHog
-                    sh '''
-                    if ! [ -x "$(command -v trufflehog)" ]; then
-                        echo "TruffleHog not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
-                    else
-                        echo "TruffleHog is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
-        stage('Run TruffleHog') {
-            steps {
-                script {
-                    // Run TruffleHog directly
-                    sh '''
-                    trufflehog git https://github.com/Gagan-R31/Jenkins --debug
-                    '''
-                }
-            }
-        }
+        // stage('Install TruffleHog') {
+        //     steps {
+        //         script {
+        //             // Install TruffleHog
+        //             sh '''
+        //             if ! [ -x "$(command -v trufflehog)" ]; then
+        //                 echo "TruffleHog not found, installing..."
+        //                 curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
+        //             else
+        //                 echo "TruffleHog is already installed"
+        //             fi
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Run TruffleHog') {
+        //     steps {
+        //         script {
+        //             // Run TruffleHog directly
+        //             sh '''
+        //             trufflehog git https://github.com/Gagan-R31/Jenkins --debug
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Install Go') {
             steps {
                 script {
