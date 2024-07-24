@@ -18,7 +18,7 @@ pipeline {
                     sh '''
                         if ! [ -x "$(command -v cosign)" ]; then
                             echo "Cosign not found, installing..."
-                            chmod +x /usr/local/bin/cosign
+                            chmod +x /usr/local/bin/
                             curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
                             mv cosign-linux-amd64 /usr/local/bin/cosign
                             chmod +x /usr/local/bin/cosign
