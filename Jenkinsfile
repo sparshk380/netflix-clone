@@ -63,7 +63,7 @@ pipeline {
                     if ! [ -x "$(command -v go)" ]; then
                         echo "Go not found, installing..."
                         curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
-                        sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+                        tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
                         export PATH=$PATH:/usr/local/go/bin
                         echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
                     else
