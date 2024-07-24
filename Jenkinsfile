@@ -5,25 +5,25 @@ pipeline {
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
-        stage('Install Docker') {
-            steps {
-                script {
-                    // Install Docker
-                    sh '''
-                    if ! [ -x "$(command -v docker)" ]; then
-                        echo "Docker not found, installing..."
-                        curl -fsSL https://get.docker.com -o get-docker.sh
-                        sh get-docker.sh
-                        usermod -aG docker $USER
-                        systemctl start docker
-                        chmod 666 /var/run/docker.sock
-                    else
-                        echo "Docker is already installed"
-                    fi
-                    '''
-                }
-            }
-        }
+        // stage('Install Docker') {
+        //     steps {
+        //         script {
+        //             // Install Docker
+        //             sh '''
+        //             if ! [ -x "$(command -v docker)" ]; then
+        //                 echo "Docker not found, installing..."
+        //                 curl -fsSL https://get.docker.com -o get-docker.sh
+        //                 sh get-docker.sh
+        //                 usermod -aG docker $USER
+        //                 systemctl start docker
+        //                 chmod 666 /var/run/docker.sock
+        //             else
+        //                 echo "Docker is already installed"
+        //             fi
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Checkout') {
             steps {
                 // Checkout the repository
