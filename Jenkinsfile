@@ -17,9 +17,9 @@ pipeline {
                         echo "Docker not found, installing..."
                         curl -fsSL https://get.docker.com -o get-docker.sh
                         sh get-docker.sh
-                        sudo usermod -aG docker $USER
-                        sudo systemctl start docker
-                        sudo chmod 666 /var/run/docker.sock
+                        usermod -aG docker $USER
+                        systemctl start docker
+                        chmod 666 /var/run/docker.sock
                     else
                         echo "Docker is already installed"
                     fi
@@ -53,7 +53,7 @@ pipeline {
                 script {
                     // Run TruffleHog directly
                     sh '''
-                    sudo trufflehog git https://github.com/Gagan-R31/Jenkins --debug
+                    trufflehog git https://github.com/Gagan-R31/Jenkins --debug
                     '''
                 }
             }
