@@ -5,7 +5,6 @@ pipeline {
         DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
         IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-        ror
     }
     stages {
         stage('Install Docker') {
