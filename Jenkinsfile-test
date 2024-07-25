@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the repository
+                checkout scm
+            }
+        }
+        stage('Install Go') {
+            steps {
+                script {
+                    // Install Go if it's not already installed
+                    sh '''
+                    if ! [ -x "$(command -v go)" ]; then
+                        echo "Go not found, installing..."
+                        curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
+                        sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+                        export PATH=$PATH:/usr/local/go/bin
+                        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+                    else
+                        echo "Go is already installed"
+                    fi
+                    '''
+                    // Ensure the new Go binary is in the PATH
+                    sh 'export PATH=$PATH:/usr/local/go/bin'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh 'docker build -t go-image:01 .'
+                }
+            }
+        }
+        stage('Run Container') {
+            steps {
+                script {
+                    // Run the Docker container from the built image
+                    sh '''
+                    docker run -d -p 8000:8000 --name myapp-container go-image:01
+                    '''
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                script {
+                    // Run Go tests
+                    sh '''
+                    export PATH=$PATH:/usr/local/go/bin
+                    go test -v ./...
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                def repoUrl = "https://api.github.com/repos/Gagan-R31/Jenkins/statuses/${env.GIT_COMMIT}"
+                def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                        curl -H "Authorization: token $GITHUB_TOKEN" \
+                             -H "Content-Type: application/json" \
+                             -d '{
+                                 "state": "${status}",
+                                 "target_url": "${env.BUILD_URL}",
+                                 "description": "Jenkins Build ${status}",
+                                 "context": "jenkins-ci"
+                             }' \
+                             ${repoUrl}
+                    """
+                }
+            }
+            // Clean up Docker images and containers to save space
+            sh '''
+            docker rm -f myapp-container || true
+            docker rmi go-image:01 || true
+            '''
+        }
+    }
+}
