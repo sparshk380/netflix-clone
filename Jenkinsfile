@@ -55,17 +55,6 @@ pipeline {
                 }
             }
         }
-        stage('Fetch Dockerfile') {
-            steps {
-                container('kaniko') {
-                    script {
-                        sh '''
-                        curl -L -o /workspace/Dockerfile https://github.com/Gagan-R31/Jenkins/raw/feat-1/Dockerfile
-                        '''
-                    }
-                }
-            }
-        }
         stage('Build and Push Docker Image with Kaniko') {
             steps {
                 container('kaniko') {
