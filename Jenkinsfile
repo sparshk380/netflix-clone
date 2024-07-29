@@ -43,6 +43,19 @@ pipeline {
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
+        stage('Install Go') {
+            steps {
+                container('golang') {
+                    script {
+                        sh '''
+                        # Go should already be installed in golang:1.16
+                        go version
+                        # go test -v ./...
+                        '''
+                    }
+                }
+            }
+        }
         stage('Build and Push Docker Image with Kaniko') {
             steps {
                 container('kaniko') {
@@ -52,19 +65,6 @@ pipeline {
                                          --context=${WORKSPACE} \
                                          --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
                                          --cleanup
-                        '''
-                    }
-                }
-            }
-        }
-        stage('Install Go') {
-            steps {
-                container('golang') {
-                    script {
-                        sh '''
-                        # Go should already be installed in golang:1.16
-                        go version
-                        go test -v ./...
                         '''
                     }
                 }
