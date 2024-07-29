@@ -15,7 +15,7 @@ pipeline {
                 args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
               - name: kubectl
                 image: joshendriks/alpine-k8s
-                command;
+                command:
                 - /bin/cat
               - name: kaniko
                 image: gcr.io/kaniko-project/executor:debug
