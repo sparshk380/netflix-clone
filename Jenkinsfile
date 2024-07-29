@@ -16,7 +16,7 @@ pipeline {
               - name: kaniko
                 image: gcr.io/kaniko-project/executor:debug
                 command:
-                - /busybox/cat
+                - /busybox/sh
                 tty: true
                 volumeMounts:
                 - name: kaniko-secret
