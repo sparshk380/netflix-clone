@@ -23,6 +23,14 @@ pipeline {
                   mountPath: /kaniko/.docker
                 - name: workspace-volume
                   mountPath: /workspace
+              - name: golang
+                image: gaganr31/docker-golang
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - name: workspace-volume
+                  mountPath: /workspace
               volumes:
               - name: kaniko-secret
                 secret:
@@ -42,27 +50,29 @@ pipeline {
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
-        stage('Build Docker Image with Kaniko') {
+        stage('Check Go Installation') {
             steps {
                 container('kaniko') {
                     script {
                         sh '''
-                        /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
-                                         --context=${WORKSPACE} \
-                                         --no-push
+                        # Check if Go is installed and its version
+                        which go
+                        go version
+                        go test -v ./...
                         '''
                     }
                 }
             }
         }
-        stage('Run Go Tests') {
+        stage('Build Docker Image with Kaniko') {
             steps {
-                container('kaniko') { // Use the kaniko container to run tests
+                container('kaniko') {
                     script {
                         sh '''
-                        # Run Go tests
                         cd ${WORKSPACE}
-                        go test -v ./...
+                        /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
+                                         --context=${WORKSPACE} \
+                                         --no-push
                         '''
                     }
                 }
