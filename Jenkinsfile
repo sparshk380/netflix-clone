@@ -21,11 +21,6 @@ spec:
     volumeMounts:
     - name: kaniko-secret
       mountPath: /kaniko/.docker
-  - name: golang
-    image: golang:1.21
-    command:
-    - cat
-    tty: true
   volumes:
   - name: kaniko-secret
     secret:
@@ -45,50 +40,31 @@ spec:
     }
     
     stages {
-        stage('Build and Test') {
+        stage('Build, Test, and Push Docker Image') {
             steps {
                 container('kaniko') {
                     script {
+                        // Build the image
                         sh '''
                         /kaniko/executor --dockerfile=Dockerfile \
                         --context=${WORKSPACE} \
                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
+                        --no-push
+                        '''
+                        
+                        // Run tests inside the built image
+                        sh '''
+                        /kaniko/executor --dockerfile=Dockerfile \
+                        --context=${WORKSPACE} \
                         --no-push \
-                        --tarPath=/workspace/image.tar \
-                        --cleanup
+                        --cmd="go test -v ./..."
                         '''
-                    }
-                }
-                container('golang') {
-                    script {
-                        sh '''
-                        # Extract the image contents
-                        mkdir -p /tmp/app
-                        tar -xf /workspace/image.tar -C /tmp/app
-
-                        # Find the app directory and run tests
-                        APP_DIR=$(find /tmp/app -type d -name "app" | head -n 1)
-                        if [ -z "$APP_DIR" ]; then
-                            echo "App directory not found"
-                            exit 1
-                        fi
-                        cd $APP_DIR
-                        go test -v ./...
-                        '''
-                    }
-                }
-            }
-        }
-        
-        stage('Push Docker Image') {
-            steps {
-                container('kaniko') {
-                    script {
+                        
+                        // If tests pass, push the image
                         sh '''
                         /kaniko/executor --dockerfile=Dockerfile \
                         --context=${WORKSPACE} \
-                        --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
-                        --cleanup
+                        --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
                         '''
                     }
                 }
