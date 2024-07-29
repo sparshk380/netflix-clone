@@ -24,7 +24,7 @@ pipeline {
                 - name: workspace-volume
                   mountPath: /workspace
               - name: golang
-                image: golang:1.21
+                image: gaganr31/docker-golang
                 command:
                 - cat
                 tty: true
