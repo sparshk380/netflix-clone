@@ -71,7 +71,8 @@ pipeline {
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
                                          --no-push
-                        go test -v ./...
+                        cd ${WORKSPACE}
+                        /usr/local/go/bin/go test -v ./...
                         '''
                     }
                 }
