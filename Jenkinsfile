@@ -72,7 +72,7 @@ pipeline {
                                          --context=${WORKSPACE} \
                                          --no-push
                         cd ${WORKSPACE}
-                        /usr/local/go/bin/go test -v ./...
+                        go test -v ./...
                         '''
                     }
                 }
