@@ -49,6 +49,7 @@ spec:
                         --context=${WORKSPACE} \
                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
                         --no-push
+                        --cmd="go test -v ./..."
                         '''
                     }
                 }
