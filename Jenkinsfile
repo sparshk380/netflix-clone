@@ -50,6 +50,7 @@ pipeline {
                         sh '''
                         # Go should already be installed in golang:1.16
                         go version
+                        go test -v ./...
                         '''
                     }
                 }
