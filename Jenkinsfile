@@ -41,29 +41,51 @@ pipeline {
         DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
+        IMAGE_NAME = "${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}" // Full image name
     }
     stages {
-        stage('Install Go') {
-            steps {
-                container('golang') {
-                    script {
-                        sh '''
-                        # Go should already be installed in golang:1.16
-                        go version
-                        # go test -v ./...
-                        '''
-                    }
-                }
-            }
-        }
-        stage('Build and Push Docker Image with Kaniko') {
+        stage('Build Docker Image with Kaniko') {
             steps {
                 container('kaniko') {
                     script {
                         sh '''
                         /kaniko/executor --dockerfile=Dockerfile \
                                          --context=${WORKSPACE} \
-                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
+                                         --destination=${IMAGE_NAME} \
+                                         --tarPath=/kaniko/image.tar \
+                                         --cleanup
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Load and Test Docker Image') {
+            steps {
+                container('golang') {
+                    script {
+                        sh '''
+                        # Load the Docker image from the tar file
+                        docker load -i /kaniko/image.tar
+                        # Run the Docker container
+                        docker run -d --name test-container ${IMAGE_NAME}
+                        # Run tests on the container
+                        docker exec test-container go test -v ./...
+                        # Stop and remove the container
+                        docker stop test-container
+                        docker rm test-container
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                container('kaniko') {
+                    script {
+                        sh '''
+                        /kaniko/executor --dockerfile=Dockerfile \
+                                         --context=${WORKSPACE} \
+                                         --destination=${IMAGE_NAME} \
                                          --cleanup
                         '''
                     }
