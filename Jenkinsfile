@@ -22,7 +22,7 @@ pipeline {
                 - name: kaniko-secret
                   mountPath: /kaniko/.docker
               - name: golang
-                image: golang:1.23
+                image: golang:1.21
                 command:
                 - cat
                 tty: true
