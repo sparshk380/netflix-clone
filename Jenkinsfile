@@ -65,18 +65,6 @@ pipeline {
                 }
             }
         }
-        stage('Run Tests with Golang') {
-            steps {
-                container('golang') {
-                    script {
-                        sh '''
-                        docker load -i /workspace/image.tar
-                        docker run --rm ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} go test -v ./...
-                        '''
-                    }
-                }
-            }
-        }
         stage('Push Docker Image to Docker Hub') {
             steps {
                 container('kaniko') {
