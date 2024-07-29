@@ -50,6 +50,7 @@ pipeline {
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
                                          --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
+                                         --no-push
                         '''
                     }
                 }
