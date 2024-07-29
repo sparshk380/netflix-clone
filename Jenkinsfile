@@ -21,6 +21,11 @@ spec:
     volumeMounts:
     - name: kaniko-secret
       mountPath: /kaniko/.docker
+  - name: golang
+    image: golang:1.21
+    command:
+    - cat
+    tty: true
   volumes:
   - name: kaniko-secret
     secret:
@@ -40,23 +45,7 @@ spec:
     }
     
     stages {
-        stage('Build Docker Image with Kaniko') {
-            steps {
-                container('kaniko') {
-                    script {
-                        sh '''
-                        /kaniko/executor --dockerfile=Dockerfile \
-                        --context=${WORKSPACE} \
-                        --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
-                        --no-push
-                        --cmd="go test -v ./..."
-                        '''
-                    }
-                }
-            }
-        }
-        
-        stage('Test Go Code') {
+        stage('Build and Test') {
             steps {
                 container('kaniko') {
                     script {
@@ -65,7 +54,26 @@ spec:
                         --context=${WORKSPACE} \
                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
                         --no-push \
-                        --cmd="go test -v ./..."
+                        --tarPath=/workspace/image.tar \
+                        --cleanup
+                        '''
+                    }
+                }
+                container('golang') {
+                    script {
+                        sh '''
+                        # Extract the image contents
+                        mkdir -p /tmp/app
+                        tar -xf /workspace/image.tar -C /tmp/app
+
+                        # Find the app directory and run tests
+                        APP_DIR=$(find /tmp/app -type d -name "app" | head -n 1)
+                        if [ -z "$APP_DIR" ]; then
+                            echo "App directory not found"
+                            exit 1
+                        fi
+                        cd $APP_DIR
+                        go test -v ./...
                         '''
                     }
                 }
@@ -79,7 +87,8 @@ spec:
                         sh '''
                         /kaniko/executor --dockerfile=Dockerfile \
                         --context=${WORKSPACE} \
-                        --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
+                        --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
+                        --cleanup
                         '''
                     }
                 }
