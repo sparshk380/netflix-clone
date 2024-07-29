@@ -50,6 +50,19 @@ pipeline {
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
+        stage('Check Go Installation') {
+            steps {
+                container('kaniko') {
+                    script {
+                        sh '''
+                        # Check if Go is installed and its version
+                        which go
+                        go version
+                        '''
+                    }
+                }
+            }
+        }
         stage('Build Docker Image with Kaniko') {
             steps {
                 container('kaniko') {
