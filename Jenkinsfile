@@ -14,9 +14,9 @@ pipeline {
                 image: jenkins/inbound-agent
                 args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
               - name: kaniko
-                image: gcr.io/kaniko-project/executor:latest
+                image: gcr.io/kaniko-project/executor:debug
                 command:
-                - cat
+                - /busybox/sh
                 tty: true
                 volumeMounts:
                 - name: kaniko-secret
@@ -24,7 +24,7 @@ pipeline {
                 - name: workspace-volume
                   mountPath: /workspace
               - name: golang
-                image: golang:1.16
+                image: golang:1.21
                 command:
                 - cat
                 tty: true
@@ -35,16 +35,19 @@ pipeline {
               - name: kaniko-secret
                 secret:
                   secretName: kaniko-secret
+                  items:
+                  - key: .dockerconfigjson
+                    path: config.json
               - name: workspace-volume
                 emptyDir: {}
             '''
         }
     }
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKERHUB_REPO = 'gaganr31/jenkins'
-        IMAGE_TAG = 'my-app'
-        BUILD_TAG = "${env.BUILD_ID}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
+        DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
+        IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
+        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
         stage('Build Docker Image with Kaniko') {
