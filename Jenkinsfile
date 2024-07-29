@@ -1,113 +1,85 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'k8s-agent'
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              labels:
+                some-label: some-label-value
+            spec:
+              containers:
+              - name: jnlp
+                image: jenkins/inbound-agent
+                args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
+              - name: kaniko
+                image: gcr.io/kaniko-project/executor:debug
+                command:
+                - /busybox/cat
+                tty: true
+                volumeMounts:
+                - name: kaniko-secret
+                  mountPath: /kaniko/.docker
+              - name: golang
+                image: golang:1.16
+                command:
+                - cat
+                tty: true
+              volumes:
+              - name: kaniko-secret
+                secret:
+                  secretName: kaniko-secret
+                  items:
+                    - key: .dockerconfigjson
+                      path: config.json
+            '''
+        }
+    }
     environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
+        DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
         IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
         BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
     }
     stages {
-        // stage('Install Docker') {
-        //     steps {
-        //         script {
-        //             // Install Docker
-        //             sh '''
-        //             if ! [ -x "$(command -v docker)" ]; then
-        //                 echo "Docker not found, installing..."
-        //                 curl -fsSL https://get.docker.com -o get-docker.sh
-        //                 sh get-docker.sh
-        //                 usermod -aG docker $USER
-        //                 systemctl start docker
-        //                 chmod 666 /var/run/docker.sock
-        //             else
-        //                 echo "Docker is already installed"
-        //             fi
-        //             '''
-        //         }
-        //     }
-        // }
-        stage('Checkout') {
-            steps {
-                // Checkout the repository
-                checkout scm
-            }
-        }
-        // stage('Install TruffleHog') {
-        //     steps {
-        //         script {
-        //             // Install TruffleHog
-        //             sh '''
-        //             if ! [ -x "$(command -v trufflehog)" ]; then
-        //                 echo "TruffleHog not found, installing..."
-        //                 curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -v -b /usr/local/bin
-        //             else
-        //                 echo "TruffleHog is already installed"
-        //             fi
-        //             '''
-        //         }
-        //     }
-        // }
-        // stage('Run TruffleHog') {
-        //     steps {
-        //         script {
-        //             // Run TruffleHog directly
-        //             sh '''
-        //             trufflehog git https://github.com/Gagan-R31/Jenkins --debug
-        //             '''
-        //         }
-        //     }
-        // }
         stage('Install Go') {
             steps {
-                script {
-                    // Install Go
-                    sh '''
-                    if ! [ -x "$(command -v go)" ]; then
-                        echo "Go not found, installing..."
-                        curl -LO https://golang.org/dl/go1.21.1.linux-amd64.tar.gz
-                        tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
-                        export PATH=$PATH:/usr/local/go/bin
-                        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
-                    else
-                        echo "Go is already installed"
-                    fi
-                    '''
-                    // Ensure the new Go binary is in the PATH
-                    sh 'export PATH=$PATH:/usr/local/go/bin'
+                container('golang') {
+                    script {
+                        sh '''
+                        # Go should already be installed in golang:1.16
+                        go version
+                        '''
+                    }
                 }
             }
         }
-        stage('Build Docker Image') {
+        stage('Fetch Dockerfile') {
             steps {
-                script {
-                    // Build the Docker image
-                    sh """
-                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} .
-                    """
+                container('kaniko') {
+                    script {
+                        sh '''
+                        curl -L -o /workspace/Dockerfile https://github.com/Gagan-R31/Jenkins/raw/feat-1/Dockerfile
+                        '''
+                    }
                 }
             }
         }
-        stage('Test') {
+        stage('Build and Push Docker Image with Kaniko') {
             steps {
-                // Run Go tests
-                sh '''
-                export PATH=$PATH:/usr/local/go/bin
-                go test -v ./...
-                '''
+                container('kaniko') {
+                    script {
+                        sh '''
+                        /kaniko/executor --dockerfile=/workspace/Dockerfile \
+                                         --context=/workspace \
+                                         --destination=$DOCKERHUB_REPO:$IMAGE_TAG-$BUILD_TAG \
+                                         --cleanup
+                        '''
+                    }
+                }
             }
         }
-        // stage('Push to Docker Hub') {
-        //     steps {
-        //         script {
-        //             // Log in to Docker Hub
-        //             sh """
-        //             echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
-        //             """
-        //             // Push the Docker image
-        //             sh """
-        //             docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
-        //             """
-        //         }
-        //     }
-        // }
     }
     post {
         always {
@@ -129,8 +101,6 @@ pipeline {
                     """
                 }
             }
-            // Clean up Docker images to save space
-            sh 'docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} || true'
         }
     }
 }
