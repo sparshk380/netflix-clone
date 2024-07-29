@@ -57,7 +57,15 @@ pipeline {
                         sh '''
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
-                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
+                                         --no-push
+                        # Set up Go environment
+                        export PATH=$PATH:/usr/local/go/bin
+                        export GOPATH=$WORKSPACE/go
+                        export GOCACHE=$WORKSPACE/go-cache
+                        
+                        # Run Go tests
+                        cd ${WORKSPACE}
+                        go test -v ./...
                         '''
                     }
                 }
