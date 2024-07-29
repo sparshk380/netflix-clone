@@ -68,10 +68,11 @@ pipeline {
                 container('kaniko') {
                     script {
                         sh '''
+                        cd ${WORKSPACE}
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
                                          --no-push
-                        cd ${WORKSPACE}
+                        
                         go test -v ./...
                         '''
                     }
