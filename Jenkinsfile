@@ -57,22 +57,8 @@ pipeline {
                         sh '''
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
-                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
-                                         --tarPath=/workspace/image.tar \
-                                         --no-push
-                        '''
-                    }
-                }
-            }
-        }
-        stage('Push Docker Image to Docker Hub') {
-            steps {
-                container('kaniko') {
-                    script {
-                        sh '''
-                        /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
-                                         --context=${WORKSPACE} \
                                          --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
+                                         --no-push
                         '''
                     }
                 }
