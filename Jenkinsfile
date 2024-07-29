@@ -59,7 +59,6 @@ pipeline {
                                          --context=${WORKSPACE} \
                                          --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
                                          --tarPath=/workspace/image.tar \
-                                         --cleanup
                                          --no-push
                         '''
                     }
