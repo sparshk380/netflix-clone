@@ -71,12 +71,6 @@ pipeline {
                         /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
                                          --no-push
-                        
-                        # Ensure Go is in the PATH
-                        export PATH=$PATH:/usr/local/go/bin
-
-                        # Run Go tests
-                        cd ${WORKSPACE}
                         go test -v ./...
                         '''
                     }
