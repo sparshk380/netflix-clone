@@ -13,6 +13,10 @@ pipeline {
               - name: jnlp
                 image: jenkins/inbound-agent
                 args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
+              - name: kubectl
+                image: joshendriks/alpine-k8s
+                command;
+                - /bin/cat
               - name: kaniko
                 image: gcr.io/kaniko-project/executor:debug
                 command:
@@ -55,6 +59,7 @@ pipeline {
         }
         stage('Run Tests on Docker Image') {
             steps {
+                container('kubectl')
                 script {
                     // Define Kubernetes Pod for testing
                     def testPodYaml = """
