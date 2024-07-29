@@ -60,9 +60,9 @@ pipeline {
                 container('kaniko') {
                     script {
                         sh '''
-                        /kaniko/executor --dockerfile=/workspace/Dockerfile \
-                                         --context=/workspace \
-                                         --destination=$DOCKERHUB_REPO:$IMAGE_TAG-$BUILD_TAG \
+                        /kaniko/executor --dockerfile=Dockerfile \
+                                         --context=${WORKSPACE} \
+                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
                                          --cleanup
                         '''
                     }
