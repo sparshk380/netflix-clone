@@ -14,73 +14,74 @@ pipeline {
                 image: jenkins/inbound-agent
                 args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
               - name: kaniko
-                image: gcr.io/kaniko-project/executor:debug
+                image: gcr.io/kaniko-project/executor:latest
                 command:
-                - /busybox/sh
+                - cat
                 tty: true
                 volumeMounts:
                 - name: kaniko-secret
                   mountPath: /kaniko/.docker
+                - name: workspace-volume
+                  mountPath: /workspace
               - name: golang
-                image: gaganr31/docker-golang
+                image: golang:1.16
                 command:
                 - cat
                 tty: true
+                volumeMounts:
+                - name: workspace-volume
+                  mountPath: /workspace
               volumes:
               - name: kaniko-secret
                 secret:
                   secretName: kaniko-secret
-                  items:
-                    - key: .dockerconfigjson
-                      path: config.json
+              - name: workspace-volume
+                emptyDir: {}
             '''
         }
     }
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
-        DOCKERHUB_REPO = 'gaganr31/jenkins' // Your Docker Hub repository
-        IMAGE_TAG = 'my-app' // Image tag, can be changed if needed
-        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
-        IMAGE_NAME = "${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}" // Full image name
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKERHUB_REPO = 'gaganr31/jenkins'
+        IMAGE_TAG = 'my-app'
+        BUILD_TAG = "${env.BUILD_ID}"
     }
     stages {
-        stage('Build, Test, and Push Docker Image') {
+        stage('Build Docker Image with Kaniko') {
             steps {
                 container('kaniko') {
                     script {
                         sh '''
-                        # Build the Docker image
-                        /kaniko/executor --dockerfile=Dockerfile \
+                        /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
-                                         --destination=${IMAGE_NAME} \
-                                         --tarPath=/kaniko/image.tar \
+                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} \
+                                         --tarPath=/workspace/image.tar \
                                          --cleanup
                         '''
                     }
                 }
+            }
+        }
+        stage('Run Tests with Golang') {
+            steps {
                 container('golang') {
                     script {
                         sh '''
-                        # Load the Docker image from the tar file
-                        docker load -i /kaniko/image.tar
-                        # Run the Docker container
-                        docker run -d --name test-container ${IMAGE_NAME}
-                        # Run tests on the container
-                        docker exec test-container go test -v ./...
-                        # Stop and remove the container
-                        docker stop test-container
-                        docker rm test-container
+                        docker load -i /workspace/image.tar
+                        docker run --rm ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} go test -v ./...
                         '''
                     }
                 }
+            }
+        }
+        stage('Push Docker Image to Docker Hub') {
+            steps {
                 container('kaniko') {
                     script {
                         sh '''
-                        # Push the Docker image to Docker Hub
-                        /kaniko/executor --dockerfile=Dockerfile \
+                        /kaniko/executor --dockerfile=${WORKSPACE}/Dockerfile \
                                          --context=${WORKSPACE} \
-                                         --destination=${IMAGE_NAME} \
-                                         --cleanup
+                                         --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
                         '''
                     }
                 }
@@ -107,6 +108,11 @@ pipeline {
                     """
                 }
             }
+            slackSend (
+                channel: '#build-notifications',
+                color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger',
+                message: "Build ${currentBuild.fullDisplayName} finished with status: ${currentBuild.result}"
+            )
         }
     }
 }
