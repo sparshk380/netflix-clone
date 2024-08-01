@@ -1,81 +1,63 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'k8s-agent'
+            yamlFile 'pod-config.yaml'
+        }
+    }
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Replace 'dockerhub' with your Jenkins credentials ID
-        DOCKERHUB_REPO = 'sparshk848/netflix-clone' // Your Docker Hub repository
-        IMAGE_TAG = 'netflix-clone' // Image tag, can be changed if needed
-        BUILD_TAG = "${env.BUILD_ID}" // Unique tag for each build
+        GITHUB_TOKEN = credentials('github-token1')
+        IMAGE_TAG = 'unode-onboard-api'
+        SOURCE_BRANCH = "${env.CHANGE_BRANCH ?: env.GIT_BRANCH}"
+        DOCKERHUB_REPO = 'gaganr31/jenkins'
     }
     stages {
-        stage('Install Docker') {
+        stage('Create Pod Config') {
             steps {
                 script {
-                    // Install Docker
-                    sh '''
-                    if ! [ -x "$(command -v docker)" ]; then
-                        echo "Docker not found, installing..."
-                        curl -fsSL https://get.docker.com -o get-docker.sh
-                        sh get-docker.sh
-                        sudo usermod -aG docker $USER
-                        sudo systemctl start docker
-                        sudo chmod 666 /var/run/docker.sock
-                    else
-                        echo "Docker is already installed"
-                    fi
-                    '''
+                    withCredentials([string(credentialsId: 'k8s-pod-yaml', variable: 'POD_YAML')]) {
+                        writeFile file: 'pod-config.yaml', text: POD_YAML
+                    }
                 }
             }
         }
-        stage('Checkout') {
-            steps {
-                // Checkout the repository
-                checkout scm
-            }
-        }
-        stage('Build Docker Image') {
+        stage('Clone Repository and Get Commit SHA') {
             steps {
                 script {
-                    // Build the Docker image
                     sh """
-                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG} .
+                    echo "Cloning branch: ${env.SOURCE_BRANCH}"
+                    git clone -b ${env.SOURCE_BRANCH} https://${GITHUB_TOKEN}@github.com/Gagan-R31/netflix-clone.git
+                    cd netflix-clone
                     """
+                    env.COMMIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    echo "Commit SHA: ${env.COMMIT_SHA}"
                 }
             }
         }
-        stage('Push to Docker Hub') {
+        stage('Check Go Installation') {
             steps {
-                script {
-                    // Log in to Docker Hub
-                    sh """
-                    echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
-                    """
-                    // Push the Docker image
-                    sh """
-                    docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}-${BUILD_TAG}
-                    """
+                container('kaniko') {
+                    script {
+                        sh '''
+                        cd netflix-clone
+                        which go
+                        go version
+                        '''
+                    }
                 }
             }
         }
-    }
-    post {
-        always {
-            script
-             {
-                def repoUrl = "https://api.github.com/repos/sparshk380/netflix-clone/statuses/${env.GIT_COMMIT}"
-                def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
-                
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    sh """
-                        curl -H "Authorization: token $GITHUB_TOKEN" \
-                             -H "Content-Type: application/json" \
-                             -d '{
-                                 "state": "${status}",
-                                 "target_url": "${env.BUILD_URL}",
-                                 "description": "Jenkins Build ${status}",
-                                 "context": "jenkins-ci"
-                             }' \
-                             ${repoUrl}
-                    """
+        stage('Build Docker Image with Kaniko') {
+            steps {
+                container('kaniko') {
+                    script {
+                        sh """
+                            cd netflix-clone
+                            /kaniko/executor --dockerfile=./Dockerfile \
+                                             --context=. \
+                                             --destination=${DOCKERHUB_REPO}:${IMAGE_TAG}-${env.COMMIT_SHA}
+                        """
+                    }
                 }
             }
         }
