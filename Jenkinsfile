@@ -17,11 +17,9 @@ pipeline {
         stage('Prepare Kubernetes Agent') {
             steps {
                 script {
-                    def encodedYaml = K8S_POD_YAML.bytes.encodeBase64().toString()
-                    env.ENCODED_K8S_YAML = encodedYaml
-                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: encodedYaml, var: 'ENCODED_K8S_YAML']]]) {
-                        echo "Kubernetes YAML prepared and masked"
-                    }
+                    // Write the YAML to a temporary file without echoing content
+                    writeFile file: 'k8s-pod.yaml', text: K8S_POD_YAML
+                    echo "Kubernetes YAML prepared"
                 }
             }
         }
@@ -30,9 +28,7 @@ pipeline {
             agent {
                 kubernetes {
                     label 'k8s-agent'
-                    yaml """
-                        ${new String(env.ENCODED_K8S_YAML.decodeBase64())}
-                    """
+                    yamlFile 'k8s-pod.yaml'
                 }
             }
             stages {
@@ -74,6 +70,14 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                // Clean up the temporary YAML file
+                sh 'rm -f k8s-pod.yaml'
             }
         }
     }
