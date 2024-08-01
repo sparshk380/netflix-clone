@@ -2,7 +2,7 @@ pipeline {
     agent {
         kubernetes {
             label 'k8s-agent'
-            yamlFile 'pod-config.yaml'
+            yamlFile 'pod-config.yaml' > /dev/null 2>&1
         }
     }
     environment {
