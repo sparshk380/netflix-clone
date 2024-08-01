@@ -27,7 +27,7 @@ pipeline {
         stage('Run on Kubernetes') {
             agent {
                 kubernetes {
-                    label 'k8s-agent'
+                    inheritFrom 'k8s-agent'
                     yamlFile 'k8s-pod.yaml'
                 }
             }
