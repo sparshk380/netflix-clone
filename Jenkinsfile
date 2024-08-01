@@ -6,7 +6,7 @@ pipeline {
         }
     }
     environment {
-        GITHUB_TOKEN = credentials('github-token1')
+        GITHUB_TOKEN = credentials('github-tokenss')
         IMAGE_TAG = 'unode-onboard-api'
         SOURCE_BRANCH = "${env.CHANGE_BRANCH ?: env.GIT_BRANCH}"
         DOCKERHUB_REPO = 'gaganr31/jenkins'
